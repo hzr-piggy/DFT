@@ -12,6 +12,6 @@ A modified version of [PythTB](http://www.physics.rutgers.edu/pythtb/) that can 
 
 Usage similar to http://www.physics.rutgers.edu/pythtb/usage.html#pythtb.w90  
 ...
-PREFIX=w90("/path/to/file", "PREFIX")
+PREFIX=w90("/path/to/file", "PREFIX")  
 my_model=PREFIX.model(... , **nspin=2**)
 ...
