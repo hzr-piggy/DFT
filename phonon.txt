@@ -1,0 +1,52 @@
+% BASIC PHONOPY USAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%1. Create supercell
+phonopy -d --dim="2 2 2" -c POSCAR_unit
+mv SPOSCAR POSCAR
+
+%2. Create FORCE_CONSTANTS:
+	%Case a
+	%Run vasp with IBRION 6/8 on supercell
+	phonopy --fc vasprun.xml
+
+	%Case b
+	%Static vasp calculation with POSCAR-001 POSCAR-002 ...
+	%make sure phonopy_disp.yaml is in the directory
+	phonopy -f disp-{001..00n}/vasprun.xml
+	phonopy --writefc (-c SPOSCAR --dim="1 1 1")
+
+%3. Bands (require FORCE_CONSTANTS)
+phonopy -p band.conf -c POSCAR_unit
+% Sample band.conf
+	DIM = 2 2 2
+	BAND = 0 0 0  0.5 0 0  0.5 0.5 0  0 0.5 0  0 0 0  0 0 0.5  0.5 0 0.5  0.5 0.5 0.5  0 0.5 0.5  0 0 0.5
+	FORCE_CONSTANTS = READ
+	BAND_LABELS = $\Gamma$ X S Y $\Gamma$ Z U R T Z
+
+%4. Export band data as text
+phonopy-bandplot --gnuplot band.yaml > band.dat
+
+%5. Dynamical Matrix & Eigenvectors (require FORCE_CONSTANTS)
+phonopy -c POSCAR_unit (or SPOSCAR) phonopy.conf
+% Sample phonopy.conf
+	QPOINTS = 0 0 0
+	FORCE_CONSTANTS = READ
+	EIGENVECTORS = .TRUE.
+	DIM = 1 1 1
+	FC_SYMMETRY = .TRUE.
+	WRITEDM = .TRUE.
+%Output written in qpoints.yaml
+%Alternative way
+phonopy -c POSCAR_unit (or SPOSCAR) --qpoints="0 0 0" --readfc --eigenvecs --dim="1 1 1" --fc-symmetry --writedm 
+
+After getting band.yaml, use phonopy-bandplot band.yaml to plot the bands, with options
+usage: phonopy-bandplot-script.py [-h] [--hdf5] [--dmax DOS_MAX] [--dmin DOS_MIN] [--dos DOS] [--dos-factor DOS_FACTOR] [--factor FACTOR] [--fmax F_MAX] [--fmin F_MIN] [--gnuplot] [-i PDOS_INDICES] [--legend] [--legacy] [--line] [-o OUTPUT_FILENAME] [--xlabel XLABEL] [--ylabel YLABEL] [--points POINTS] [-t TITLE] [filenames ...]
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXTRACT FREQUENCY/EIGENVECTOR/DYNAMICAL MATRIX FROM qpoints.yaml
+% Note phonon eigendisplacement = eigenvector of Force-constant matrix = 1/sqrt(M)*eigenvector of DM
+
+grep 'frequency:' qpoints.yaml | awk '{print $2}'
+awk '/# atom/ {for(i=1;i<=3;i++) {getline; print $3}}' qpoints.yaml > eigenv.dat
+grep -A ? "dynamical" qpoints.yaml | sed -e '1d' | cut -c 10- | sed 's/.$//' > dm.dat % ? = natom*3
