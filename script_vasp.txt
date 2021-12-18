@@ -1,0 +1,23 @@
+% EXTRACT DATA FROM VASP OUTPUT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Get hessian matrix from vasprun.xml
+grep -A ? 'hessian' vasprun.xml | sed -e '1d' -e 's/.*<v>\(.*\)<\/v>.*/\1/' > hessian.dat % ?=natom*3
+
+% Get second derivative matrix from OUTCAR
+NATOMS=$(awk '{if(NR==7){for(i=1;i<=NF;i++){s+=$i}  print s} }' POSCAR)
+grep -A$(( 3*$NATOMS+2 )) "SECOND DERIVATIVES" OUTCAR | tail -n +4 | awk '{for (i=2; i<NF; i++) printf $i "  "; print $NF}' >IFC_MATRIX
+
+% BAND STRUCTURE
+tail -n +8 EIGENVAL | grep E -A (# of band) | grep -v E | awk '{print (NF>2 ? $(NF-2) : $0)}' | tr "\n" " " | sed -e s/"\-\-"/"\n"/g | cat -n > band.dat
+
+% Force from OUTCAR
+grep -A ? 'TOTAL-FORCE' OUTCAR | tail -n +3 | awk '{print $4,$5,$6}' > force.dat % ?=natom+1
+for d in $(ls -d */ | sort -V) ; do (cd "$d" && grep -A 21 'TOTAL-FORCE' OUTCAR | tail -n +3 | awk '{print $4,$5,$6}' >> ../force.dat); done
+
+% EXTRACT DATA FROM PHONOPY OUTPUT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GET FREQ/EIGENVECTOR/DYNAMICAL MATRIX FROM qpoints.yaml
+grep 'frequency:' qpoints.yaml | awk '{print $2}'
+awk '/# atom/ {for(i=1;i<=3;i++) {getline; print $3}}' qpoints.yaml > eigenv.dat
+grep -A ? "dynamical" qpoints.yaml | sed -e '1d' | cut -c 9- | sed 's/.$//' > dm.dat % ? = natom*3
