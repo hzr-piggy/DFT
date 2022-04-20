@@ -46,7 +46,7 @@ done
 printf "!latticeBasisVectors\n" >> $infile
 sed -n '3,5p' $posfile >> $infile
 
-atomList=($(sed -n '6p' test.vasp))
+atomList=($(sed -n '6p' $posfile))
 natom=$(sed -n '7p' $posfile)
 natomList=($natom)
 N=0
