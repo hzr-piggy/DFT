@@ -1,5 +1,16 @@
 # scripts
 
+## poscar2cif.sh
+Bash script to convert POSCAR file to cif file, requires findsym from https://stokes.byu.edu/iso/isotropy.php  
+
+### Usage: 
+./poscar2cif <POSCAR file> [-l LatticeTolerance] [-p AtomicPositionTolerance] [-r (Rhombohedral Axes)]  
+findsym filename.in > filename.cif  
+  
+Input: VASP POSCAR file  
+Output: A *.in file with same suffix as input that can be feeded into findsym  
+
+
 ## phonon.txt
 Basic usage of phonopy https://phonopy.github.io/phonopy/vasp.html to get phonon
 Also include scripts to extract phonon frequency, eigendisplacement and dynamical matrix
@@ -11,7 +22,7 @@ Simple BASH script to extract data (Hessian matrix, force matrix etc) from VASP 
 For summing projected density of states (PDOS) in Quantum Espresso (as the sumpdos.x in QE does not work on PDOS with spin-orbit)
 
 Requires prefix-proj.pdos_atom#* files from projwfc.x output  
-Usage:  
+### Usage:  
 ./sumpdos.sh atom1 atom2 ...
 
 ## gyrotropic_spin.F90 
